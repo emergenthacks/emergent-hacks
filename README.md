@@ -1,104 +1,95 @@
-﻿# Roomsure
+# Roomsure
 
-Roomsure helps people find a room for one to six months, and check it before they pay. Tell it what you need in one sentence. It ranks rooms by your own trade-offs, explains every card, lets you walk the room in 3D, and flags scam signals in listings you found elsewhere.
+Roomsure helps people compare rooms for short stays, understand the trade-offs, inspect a sample room tour, and check outside listings for warning signs. The hackathon demo focuses on Providence, Rhode Island, and synthetic listing data.
 
-## Why we are building it
+## The problem
 
-People who need housing for a summer internship, a hospital rotation or a short contract are stuck between nightly-stay platforms (expensive), year-long leases (too long), and informal posts (where scams live). Informal listings have the right inventory, but it is hard to compare them, judge the price, or spot a scam.
+People staying for an internship, clinical rotation, visiting term, or short contract often need a room for one to six months. Nightly rentals can be costly, year-long leases are too long, and informal listings are hard to compare and may contain scam signals. Roomsure makes the seeker's constraints explicit and explains each result.
 
-Roomsure makes trade-offs visible, shows why each room ranked where it did, lets you inspect the room before you commit, and shows exactly which words in a listing look suspicious.
+## What works in the current MVP
 
-## What the demo shows
+- **Natural-language intake:** describe dates, budget, commute, destination, and room needs. The backend uses Claude when configured and returns the rule-based result if Claude is unavailable. The UI labels which path answered.
+- **Explainable room ranking:** a deterministic TypeScript engine ranks synthetic rooms using the seeker's preferences. Changing priorities updates the deck locally.
+- **Swipe, shortlist, and room details:** app state and synthetic room inventory are kept in the browser. The room detail includes a 3D tour entry point, but the latest `main` branch does not include scan assets, so it currently shows a placeholder.
+- **Outside-listing check:** Claude can suggest quoted warning signs; code validates quotes and computes the final verdict. Rules continue to work offline.
+- **Demo match and reservation:** host replies and payment outcomes are simulated. No money moves.
 
-1. **Continue as Maya**: one-click demo login. Her Roomsure Passport shows simulated email, ID and card checks.
-2. **Describe your needs** in one sentence. Claude fills in editable preferences, and rules take over if Claude is unavailable.
-3. **Swipe a ranked deck.** Every card has a score and a plain-English reason ("#1 because it covers every date and is furnished; you give up $50 on price"). Move a slider and the deck re-ranks instantly.
-4. **Near misses**: when no room fits, see the one change that brings each room back.
-5. **Walk the room in 3D** from the detail page (RoomWalk Gaussian-splat viewer).
-6. **Match → chat → reserve**: a simulated host reply, a mock chat, and a simulated checkout for that room.
-7. **Scam check**: paste an outside listing to see the facts, the exact suspicious phrases, and a risk verdict.
+All people, listings, prices, verification badges, and outcomes shown in the demo are synthetic or simulated. Roomsure does not collect real ID or card details, verify ownership, fetch live inventory, guarantee safety, or hold deposits.
 
-All people, rooms, prices, verification, matching, chat and payments in the demo are synthetic or simulated. No real ID, card number or payment is collected.
+## Current deployment
 
-## How it fits together
+- **Frontend:** [roomsure-hackathon.vercel.app](https://roomsure-hackathon.vercel.app/)
+- **Backend API:** [roomsure-api.vercel.app](https://roomsure-api.vercel.app/)
+- **Backend health/session endpoint:** [`/api/me`](https://roomsure-api.vercel.app/api/me)
+- `GET /api/me` returned HTTP 200 during the latest connectivity check, and a one-time direct backend intake check returned `source: "claude"` and `fallback: null`. **Check frontend routing before demo:** latest `main` removed `website/vercel.json`; without a frontend `/api/*` rewrite, frontend requests use local fallbacks instead of reaching the backend.
+- GitHub repository: [DivyaPrakash04/emergent-hacks](https://github.com/DivyaPrakash04/emergent-hacks)
 
-| Folder | What it is | Started in |
-|---|---|---|
-| `website/` | **The UI judges see.** Designed in Lovable (TanStack Start, React, Tailwind). Talks to the backend through `/api` (`src/lib/roomsure/api.ts`), falling back to local mocks if no backend answers. | [PR #7](https://github.com/ericmxf17/emergent-hacks/pull/7) |
-| `platform/` | **The backend** (Next.js): real accounts and sessions, demo login and reset, simulated verification and payments priced on the server, and the Claude routes (`/api/intake`, `/api/check`) with rule fallbacks. Also holds the shared logic in `lib/roomsure/` and the eval in `evals/`. | [PR #2](https://github.com/ericmxf17/emergent-hacks/pull/2) |
-| `ranking/` | Ranking engine docs, tests and the offline `demo.html`. The engine itself now lives in `platform/lib/roomsure/`. | [PR #4](https://github.com/ericmxf17/emergent-hacks/pull/4) |
-| `roomwalk/` | 3D room viewer source and the video-to-3D scan pipeline (Modal or local GPU). The viewer is copied into `platform/public/roomwalk/`. | [PR #3](https://github.com/ericmxf17/emergent-hacks/pull/3) |
+Environment secrets are server-side. In Vercel, `ANTHROPIC_API_KEY` belongs on the `roomsure-api` project, never in `website/` or a `NEXT_PUBLIC_*` variable.
 
-## Product principles
+## Repository map
 
-1. **The seeker chooses the trade-offs.** A deterministic formula ranks rooms and explains every score. Trust is one of the seeker's settings ("Prefer verified hosts"), not a hidden thumb on the scale.
-2. **One ranking powers everything.** Deck, list, shortlist and detail all show the same results.
-3. **AI understands, math decides.** Claude reads sentences and listings. Code computes scores and scam verdicts, and every path has a non-AI fallback.
-4. **Trust claims stay specific.** A simulated badge is not proof of safety. A 3D scan is an inspection aid. Outside listings are always "not verified by Roomsure".
-5. **Privacy and fairness.** No protected traits in matching. No real identity or payment data in the demo.
+| Path | Role |
+|---|---|
+| `website/` | TanStack Start / React / TypeScript UI, local listing data, browser state, API client and UI tests. |
+| `platform/` | Next.js API backend, session/demo account logic, Claude adapter, rule fallback, and Turso/SQLite data access. |
+| `ranking/` | Standalone ranking-engine reference and test fixtures. The active website engine is in `website/src/lib/roomsure/`. |
+| `roomwalk/` | RoomWalk 3D viewer and video-to-scan tooling. The latest website build does not include scan assets; its tour view is a placeholder. |
+| `lovable/` | UI design/export notes and prompts. |
+| `Roomsure MVP Requirements (for LLM build).md` | Product behavior and acceptance requirements; consult with the code and solution design. |
 
-## Running it
+## Run locally
 
-Use Node 24. Two terminals: the backend, then the website.
+Use Node 24+ for the backend (it uses `node:sqlite`). Open two terminals.
 
-**1. Backend** (`platform/`, port 3000). Copy `.env.example` to `.env.local` once and add `ANTHROPIC_API_KEY` there for Claude; without a key or without API credits, the rule fallbacks run and the screens say "Read by rules (offline)".
-
-```sh
-cd platform && npm ci
-APP_URL=http://localhost:5173 npm run dev
-```
-
-`APP_URL` must be the website's address, because the backend only accepts requests from that origin.
-
-**2. Website** (`website/`, port 5173). Vite sends `/api` to the backend on port 3000 (`website/vite.config.ts`).
+**Backend**
 
 ```sh
-cd website && bun install --frozen-lockfile && bun run dev --port 5173
+cd platform
+npm ci
+cp .env.example .env.local
+npm run dev
 ```
 
-Without Bun: `npm install --no-package-lock && npx vite dev --port 5173`. Open http://localhost:5173.
+Set `APP_URL=http://localhost:5173` in `platform/.env.local`; it must match the website origin for POST requests. Add `ANTHROPIC_API_KEY` there only if you want local Claude requests. The backend will use deterministic rule fallbacks when no key is available.
 
-**Tests:** `cd platform && npm test && npm run test:e2e` (browser tests never call the paid API), `cd website && bun run test`, and `node --test ranking/rankListings.test.ts`.
-
-**Status and next steps** for whoever picks this up: [handoff.md](handoff.md).
-
-## Project documents
-
-- [MVP requirements](Roomsure%20MVP%20Requirements%20%28for%20LLM%20build%29.md): scope, behavior, ranking fixtures, acceptance criteria.
-- [Architecture](ARCHITECTURE.md): folders, shared types, routes, Claude adapter, deployment.
-- [Demo script](demo-script.md): the two-minute path, a pre-demo checklist, backups, and judge Q&A.
-- [Lovable prompts](lovable/lovable-prompts.md) and [Lovable rules](lovable/AGENTS.md): how the team designs the UI in Lovable, step by step.
-- [Master build prompt](MASTER_PROMPT.md): instructions for a coding LLM or teammate.
-- [Pitch deck](Roomsure%20Pitch%20Deck.pptx) and [HTML prototype](Roomsure%20Prototype.html): story and visual references.
-- `Roomsure MVP Requirements (for LLM build).docx`: the original spec, kept as background. The `.md` version wins.
-
-## Team areas
-
-- **Accounts and payments:** `platform/` auth, Passport, checkout (PR #2).
-- **Ranking and deck:** engine, fixtures, cards, near misses (PR #4).
-- **3D rooms:** RoomWalk viewer and scan pipeline (PR #3).
-- **Integration:** seed data, intake, scam check, match and reserve, deploy, rehearsal.
-
-## Demo limitations
-
-The app uses synthetic listings, approximate commute times, and demo fair-price baselines. Verification, host replies, chat and payments are simulated. 3D scans are samples, not the listed rooms. On Vercel, accounts created during the demo can reset when the server restarts; the demo accounts are always recreated. The app does not fetch real listings, verify a real person, move money, or guarantee that any room is legitimate.
-
-## Uploaded website frontend
-
-The Lovable website export is available in [`website/`](website/README.md). It is
-a TanStack Start / React / TypeScript frontend, imported from the provided ZIP.
-It is wired to the backend in `platform/` through `src/lib/roomsure/api.ts`
-(demo login, Claude intake, Claude scam check, reservations); if no backend
-answers, each call falls back to the export's original mock.
-
-Run it separately with Bun, using the included lockfile:
+**Website**
 
 ```sh
 cd website
-bun install --frozen-lockfile
-bun run dev --port 5173
+npm ci
+npm run dev -- --port 5173
 ```
 
-Open http://localhost:5173. Run its existing tests with `bun run test` and build
-with `bun run build`. The original website source and export metadata are kept
-intact.
+Open `http://localhost:5173`. Vite proxies `/api` to `http://127.0.0.1:3000` by default. Set `VITE_ROOMSURE_BACKEND=off` only when intentionally demonstrating the UI's local fallback.
+
+## Verification commands
+
+```sh
+# Backend unit tests and types
+cd platform && npm test && npm run typecheck
+
+# Backend end-to-end tests (requires Playwright Chromium installed)
+cd platform && npx playwright install chromium && npm run test:e2e
+
+# Frontend tests and production build
+cd website && npm test && npm run build
+
+# Ranking reference tests (run with the platform TS runner)
+cd platform && npx tsx --test ../ranking/rankListings.test.ts
+```
+
+The browser tests set empty Claude credentials and exercise the rules path; they should never spend API credits. See [LLM_REVIEW_PROMPT.md](LLM_REVIEW_PROMPT.md) for a review and verification checklist. Do not run the paid Claude evaluation suite without the team's approval.
+
+## Documents
+
+- [Solution design](SOLUTION_DESIGN.md): user journeys, scope, architecture, API/data boundaries, safety and acceptance criteria.
+- [Technical architecture](ARCHITECTURE.md): runtime diagram, deployment, data ownership, and implementation decisions.
+- [Three-minute demo script](demo-script.md): timed stage instructions, exact text to use, and recovery plan.
+- [Pitch deck prompt](PITCH_DECK_PROMPT.md): brief for another LLM to create the updated three-minute deck and paired video layout. The existing `Roomsure Pitch Deck.pptx` is an older draft and should be refreshed against this brief before presenting.
+- [LLM review prompt](LLM_REVIEW_PROMPT.md): task brief for another LLM to verify the current code and refine the demo/docs/deck.
+- [MVP requirements](Roomsure%20MVP%20Requirements%20%28for%20LLM%20build%29.md): detailed product requirements.
+- [Master build prompt](MASTER_PROMPT.md): general coding-agent context.
+
+## Next demo/integration milestone
+
+Restore and verify the frontend `/api/*` rewrite to the backend on the current `main` branch. Keep seed rooms available locally so the demo can still browse and rank if the backend is unavailable. Confirm the 3D sample assets before showing that screen; the current UI has a placeholder. Reintroduce host publishing only if it is in the agreed demo scope, then decide whether it needs backend persistence.
