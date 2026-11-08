@@ -7,7 +7,7 @@
 - Open the public production site: <https://roomsure-hackathon.vercel.app/>.
 - Confirm the page is public, then click **Continue as Maya (demo)** and use **Reset demo** from the Passport if a reservation was made in an earlier rehearsal.
 - Have the demo sentence and suspicious listing below copied to the clipboard.
-- The current `main` build shows a placeholder for the 3D tour because scan assets are absent. Skip this screen in the timed demo unless assets are restored and verified.
+- Confirm the production address serves the newest build: open `/room/fox-point`, click **Walk the room in 3D**, wait a few seconds for the kitchen to load, then close it with **×**. If it says "3D tour loads here", the address is still on an older deployment: skip the 3D beat and ask whoever runs Vercel to point the address at the newest `main` deployment.
 - Confirm the intake source badge says **Read by Claude**. If it says **Read by rules (offline)**, proceed and explain the fallback; do not wait on stage for AI.
 - Set browser zoom so text fits in the viewport. Silence notifications and keep the mobile device ready if recording a split-screen clip.
 - Record both views against the same build and same demo sentence. The desktop recording shows the complete UI; the mobile recording shows the responsive layout. Use the deck's paired video slots in [Roomsure Pitch Deck.pptx](Roomsure%20Pitch%20Deck.pptx). No video assets are currently included in this repository.
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | **0:00–0:20** | Show welcome. Click **Continue as Maya (demo)**. | “Short stays fall between nightly rentals and year-long leases. Informal sublets are hard to compare and can be risky. Roomsure makes the trade-offs visible.” | Problem clarity, usability |
 | **0:20–0:55** | On **What do you need?**, paste the sample sentence and click **Find my rooms**. Show the source badge and editable preferences. Click **Show my rooms**. | “Maya describes her internship stay in one sentence. Claude extracts dates, budget, commute and room needs. She can review everything before the app uses it. If Claude is unavailable, the rules path still works.” | Functionality, originality, execution |
-| **0:55–1:35** | In **Discover**, show rank and reason on the first card. Open **Adjust** and increase commute importance or change the priority, then show the deck reorder. Optionally show the room detail; skip the unavailable 3D scan placeholder. | “The order is calculated by deterministic code from Maya's priorities. Every card explains its trade-off.” | Functionality, execution, usability |
+| **0:55–1:35** | In **Discover**, show rank and reason on the first card. Open **Adjust** and increase commute importance or change the priority, then show the deck reorder. Optionally open a room and click **Walk the room in 3D** for about five seconds (sample scan; Esc frees the mouse, **×** closes). | “The order is calculated by deterministic code from Maya's priorities. Every card explains its trade-off.” | Functionality, execution, usability |
 | **1:35–2:20** | Go to **Check**. Select **Too good to be true**, click **Check this listing**. Point to the high-risk result and exact quoted phrases. | “For a listing from anywhere, Roomsure shows the evidence: payment pressure, inability to view, and urgency. The quotes are checked against the text, and code decides the verdict. It flags risk; it does not certify safety.” | Originality, execution, trust |
 | **2:20–2:45** | Return to Discover. Swipe right / press **Interested** on a room. If a match overlay appears, show it briefly; otherwise go to Matches. Optionally show the simulated reservation label only if time. | “A positive swipe starts a simulated host response. Chat and reservation are demo interactions; no messages are sent and no money moves.” | Functionality, honest execution |
 | **2:45–3:00** | Close on the product headline or a clean slide. | “Roomsure turns a stressful search into a choice you can understand: your criteria, clear trade-offs, and specific warning evidence.” | Clear close |
@@ -37,7 +37,7 @@ Use the **Too good to be true** preset in the Check screen. It includes a low pr
 - [ ] Confirm ranking changes visibly after a priority change. If the new top card does not change, use the app's supplied demo preferences and rehearse a different priority control.
 - [ ] Confirm both API-assisted screens show the source badge. Do not claim Claude answered unless the badge says so.
 - [ ] Confirm the scam result displays exact quotes and High risk.
-- [ ] Skip the 3D tour unless scan assets have been restored and verified on the deployed build.
+- [ ] If you show the 3D tour, rehearse it on the production address: it loads, shows "Sample 3D scan · demo", and **×** closes it.
 - [ ] Confirm reserve UI says **Simulated payment** / **No money moves in this demo**.
 - [ ] Record a full desktop walkthrough and matching mobile walkthrough as backup media.
 - [ ] Test the video clips in the final slide deck on the presentation laptop; retain a static screenshot fallback in case video playback fails.
@@ -56,6 +56,7 @@ Use the **Too good to be true** preset in the Check screen. It includes a low pr
 
 - Synthetic inventory and estimated room prices/commutes.
 - Simulated profile checks, host replies, mutual match, chat and payment.
-- The latest `main` does not include a host listing workflow or scan assets; do not present these as working demo features.
+- 3D tours are sample scans (the team's kitchen; a bedroom for the Elmhurst dorm), not the listed rooms.
+- List your room is a browser-only demo: host checks are simulated, published rooms stay in that browser, and live video-to-scan isn't deployed (only the two sample videos attach a scan).
 - The 3D viewer is a prototype and is not proof of a listing's authenticity.
 - Scam check identifies textual warning signals; it cannot guarantee whether a person or listing is legitimate.

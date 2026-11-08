@@ -18,13 +18,13 @@ The backend key is configured on the `roomsure-api` Vercel project as `ANTHROPIC
 
 ## Product reality: retain these boundaries
 
-- Seeker flow: demo welcome/login → natural-language intake → editable preferences → deterministic ranked swipe/list deck → details → matches/chat demo → simulated reserve. The latest `main` has no bundled RoomWalk scan assets; verify before describing/showing its tour.
+- Seeker flow: demo welcome/login → natural-language intake → editable preferences → deterministic ranked swipe/list deck → details → matches/chat demo → simulated reserve. Room pages with a scan open a sample 3D tour; verify it on the deployed build before showing it.
 - Scam check: pasted text → Claude suggestions (optional) → quotes validated against exact input → deterministic code verdict and fair-price estimate where possible.
 - Rooms/listings, prices, commute estimates and people are synthetic demo data.
 - Claude handles language extraction/suggestions only. Code computes rankings and final scam verdicts.
 - Rules fallback must continue to work when AI is unavailable. UI must disclose whether Claude or rules answered.
 - Identity checks, host replies, match/chat, and payment are simulations; no real ID/card data is collected and no money/messages are sent.
-- The latest `main` does not include a host listing create/edit/publish workflow. Do not claim host listing extraction or publishing is available unless source code on the branch confirms it.
+- Production is built from the fork's `main`, which has a browser-only List your room flow: simulated host checks, publishing to that browser only, and sample-video scans. This repository's `main` has only a static host demo page. Never claim AI listing extraction, server persistence, or live video-to-scan in production.
 - The sample 3D tour is not proof of the listing's authenticity and might not correspond to its room photos.
 
 ## Task A — verify current state first

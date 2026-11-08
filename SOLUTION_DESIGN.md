@@ -31,8 +31,8 @@ Maya is an intern coming to Providence. She needs a furnished room, has a target
 
 | Actor | Current MVP capability |
 |---|---|
-| Seeker / judge | Demo login, describe needs, edit preferences, swipe/list ranked synthetic rooms, view score explanation, inspect matches/chat demo, run a scam check, simulate a reservation. The current 3D tour screen is a placeholder. |
-| Host / judge | Host listing workflow is not present in the latest `main` branch; inspect before promising it in the demo. |
+| Seeker / judge | Demo login, describe needs, edit preferences, swipe/list ranked synthetic rooms, view score explanation, inspect matches/chat demo, run a scam check, simulate a reservation, open a sample 3D tour. |
+| Host / judge | Browser-only List your room demo: simulated host checks, a listing form with rule checks, sample-video scans, and publishing to that browser's deck. |
 | Roomsure system | Extract user needs with Claude or rules, rank rooms deterministically, check pasted listings, store demo session/reservation state on the backend. |
 | External listing source | Paste-only, untrusted text. Roomsure does not fetch or verify the source. |
 
@@ -43,13 +43,13 @@ Maya is an intern coming to Providence. She needs a furnished room, has a target
 - Editable budget, commute, dates, facilities, destination, and priority settings.
 - Instant client-side ranking and near-miss explanations.
 - Outside listing analysis with exact quoted warning evidence and code-computed verdict.
-- A room detail tour entry point; the latest `main` branch has no bundled scan assets, so the tour currently shows a placeholder.
+- Sample 3D tours from the room detail page, labeled "Sample 3D scan · demo".
 - Match, chat, host verification, and reservation interactions clearly marked simulated.
 
 ### Out of scope for the demo
 
 - Live inventory search, Google Maps/transit API, background verification, identity/document capture, actual $1 card authorization, escrow, deposits, payouts, live messaging, moderation operations, or a legally meaningful safety guarantee.
-- Host listing workflow; the latest `main` branch does not include it.
+- Server-side host listings (saving, sharing across devices, editing or moderating them) and live video-to-scan in production.
 - Training on swipe behavior or automatically making housing decisions from protected personal traits.
 
 ## 3. Information architecture and primary workflows
@@ -63,7 +63,7 @@ flowchart LR
   Intake --> Review[Review and edit preferences]
   Review --> Discover[Ranked swipe deck / list]
   Discover --> Detail[Room detail and score explanation]
-  Detail --> Tour[3D tour placeholder]
+  Detail --> Tour[Sample 3D tour]
   Detail --> Swipe[Interested / pass]
   Swipe --> Match[Simulated host response / match]
   Match --> Chat[Chat demo]
@@ -74,7 +74,7 @@ flowchart LR
 
 ### Host listing
 
-The latest `main` branch removed the host listing screen and related assets. Do not include host listing extraction/publishing in the current demo or present it as a working capability.
+A host can try **List your room**: sign in as the demo host, complete simulated checks, fill in the listing form, optionally attach a sample-video scan, and publish to this browser's deck. Its limits are in section 4. It is optional in the timed demo.
 
 ## 4. Detailed behavior
 
@@ -101,7 +101,7 @@ The latest `main` branch removed the host listing screen and related assets. Do 
 - Every score is deterministic and should be explainable in terms of the user's criteria. No Claude score is accepted.
 - Swipe history removes cards from the active deck while preserving rank information. Undo is supported.
 - Data comes from `website/src/lib/roomsure/data/listings.ts`; it is curated synthetic seed content.
-- A detail page includes the same score/explanation and a 3D tour entry point. No scan assets are bundled on latest `main`, so the current tour is a placeholder.
+- A detail page includes the same score/explanation. Rooms with a scan open a sample 3D tour (the team's kitchen; a bedroom for the Elmhurst dorm). It is labeled "Sample 3D scan · demo" and is not the listed room.
 
 ### Scam check
 
@@ -113,7 +113,7 @@ Claude can suggest signal IDs/quotes, but the backend rejects unknown IDs or non
 
 ### Host listing
 
-The host can complete the local form and publish a listing into browser storage. The UI marks it as a demo listing and tells the user it is visible only in the current browser. No backend persistence, AI extraction, or cross-device listing visibility is implemented. This is a follow-on engineering item, not a completed MVP capability.
+The host can complete the local form and publish a listing into browser storage. The UI marks it as a demo listing and tells the user it is visible only in the current browser. No backend persistence, AI extraction, or cross-device listing visibility is implemented. Uploading one of two bundled sample videos attaches a pre-built scan; any other video needs a local scan service that isn't deployed. This is a follow-on engineering item, not a completed MVP capability.
 
 ### Match, chat, and reservation
 
@@ -167,7 +167,7 @@ flowchart TB
 | AI | Anthropic TypeScript SDK, server-side | Natural-language intake and listing signal suggestions, with visible fallback. |
 | Database | Turso (hosted SQLite-compatible) plus local SQLite development path | Persistent demo accounts/session/payment state on serverless deployment. |
 | Listing data | TypeScript seed data | Small curated demo inventory; no database or live listing API needed for the presentation. |
-| Hosting | Two Vercel projects from one GitHub repository | Allows front-end and backend changes to deploy independently with the same-origin API rewrite. |
+| Hosting | Two Vercel projects built from one GitHub repository, the fork [DivyaPrakash04/emergent-hacks](https://github.com/DivyaPrakash04/emergent-hacks) | Allows front-end and backend changes to deploy independently with the same-origin API rewrite. |
 | 3D | RoomWalk static viewer and bundled sample assets | Shows the inspection concept without a GPU service in the live presentation. |
 
 ## 6. API and data contracts
@@ -210,10 +210,10 @@ Other identity, email, host-consent and password routes are present in `platform
 1. Open the public frontend and confirm it renders without Vercel team login.
 2. Submit intake and verify the source badge is either `Read by Claude` or `Read by rules (offline)`.
 3. Open the room deck; change a priority and verify order/reason updates immediately.
-4. Swipe/open a card; skip the 3D tour placeholder unless scan assets have been restored and verified.
+4. Swipe/open a card; if you show the 3D tour, confirm the sample scan loads and **×** closes it.
 5. Paste the high-risk sample; verify exact quoted phrases and warning verdict.
 6. Exercise simulated match/reservation and confirm the UI says simulated/no money moves.
-7. Confirm the room detail's 3D-tour placeholder is labeled accurately; skip it in the timed demo until assets are restored.
+7. Confirm the production address serves the newest deployment: `https://roomsure-hackathon.vercel.app/scans/room3d/rooms/bedroom.json` should return 200, and the Elmhurst dorm room page should open a 3D tour.
 
 ## 9. Operational setup
 
@@ -234,7 +234,7 @@ Configure variables in the backend project's **Production** environment; add **P
 
 - Root directory is `website/`.
 - Ensure the production rewrite in `website/vercel.json` points to the active `roomsure-api` domain.
-- Production URL is `https://roomsure-hackathon.vercel.app/`.
+- Production URL is `https://roomsure-hackathon.vercel.app/`, built from `main` of [DivyaPrakash04/emergent-hacks](https://github.com/DivyaPrakash04/emergent-hacks).
 
 ## 10. Work sequencing
 
