@@ -10,9 +10,10 @@ People staying for an internship, clinical rotation, visiting term, or short con
 
 - **Natural-language intake:** describe dates, budget, commute, destination, and room needs. The backend uses Claude when configured and returns the rule-based result if Claude is unavailable. The UI labels which path answered.
 - **Explainable room ranking:** a deterministic TypeScript engine ranks synthetic rooms using the seeker's preferences. Changing priorities updates the deck locally.
-- **Swipe, shortlist, and room details:** app state and synthetic room inventory are kept in the browser. The room detail includes a 3D tour entry point, but the latest `main` branch does not include scan assets, so it currently shows a placeholder.
+- **Swipe, shortlist, and room details:** app state and synthetic room inventory are kept in the browser. On rooms that have one, **Walk the room in 3D** opens a sample scan (the team's kitchen; a bedroom for the Elmhurst dorm), labeled "Sample 3D scan · demo". It is not the listed room.
 - **Outside-listing check:** Claude can suggest quoted warning signs; code validates quotes and computes the final verdict. Rules continue to work offline.
 - **Demo match and reservation:** host replies and payment outcomes are simulated. No money moves.
+- **List your room (demo):** a host flow at `/list-your-room` with simulated host checks, a listing form whose rules flag scam-like wording, and sample-video 3D scans. Published rooms stay in that browser; nothing is saved on the server, and live video-to-scan isn't deployed.
 
 All people, listings, prices, verification badges, and outcomes shown in the demo are synthetic or simulated. Roomsure does not collect real ID or card details, verify ownership, fetch live inventory, guarantee safety, or hold deposits.
 
@@ -21,7 +22,7 @@ All people, listings, prices, verification badges, and outcomes shown in the dem
 - **Frontend:** [roomsure-hackathon.vercel.app](https://roomsure-hackathon.vercel.app/)
 - **Backend API:** [roomsure-api.vercel.app](https://roomsure-api.vercel.app/)
 - **Backend health/session endpoint:** [`/api/me`](https://roomsure-api.vercel.app/api/me)
-- `GET /api/me` returned HTTP 200 during the latest connectivity check, and a one-time direct backend intake check returned `source: "claude"` and `fallback: null`. **Check frontend routing before demo:** latest `main` removed `website/vercel.json`; without a frontend `/api/*` rewrite, frontend requests use local fallbacks instead of reaching the backend.
+- `GET /api/me` returned HTTP 200 during the latest connectivity check, and a one-time direct backend intake check returned `source: "claude"` and `fallback: null`. The production website is built from `main` of [DivyaPrakash04/emergent-hacks](https://github.com/DivyaPrakash04/emergent-hacks), which has the `/api/*` rewrite in `website/vercel.json`. This repository's `main` lacks that file and the newest website changes; see [Which code is live](ARCHITECTURE.md#which-code-is-live). **Before the demo,** confirm the production address serves the newest deployment: `https://roomsure-hackathon.vercel.app/scans/room3d/rooms/bedroom.json` should return 200, and the Elmhurst dorm room page should open a 3D tour.
 - GitHub repository: [DivyaPrakash04/emergent-hacks](https://github.com/DivyaPrakash04/emergent-hacks)
 
 Environment secrets are server-side. In Vercel, `ANTHROPIC_API_KEY` belongs on the `roomsure-api` project, never in `website/` or a `NEXT_PUBLIC_*` variable.
@@ -33,7 +34,7 @@ Environment secrets are server-side. In Vercel, `ANTHROPIC_API_KEY` belongs on t
 | `website/` | TanStack Start / React / TypeScript UI, local listing data, browser state, API client and UI tests. |
 | `platform/` | Next.js API backend, session/demo account logic, Claude adapter, rule fallback, and Turso/SQLite data access. |
 | `ranking/` | Standalone ranking-engine reference and test fixtures. The active website engine is in `website/src/lib/roomsure/`. |
-| `roomwalk/` | RoomWalk 3D viewer and video-to-scan tooling. The latest website build does not include scan assets; its tour view is a placeholder. |
+| `roomwalk/` | RoomWalk 3D viewer and video-to-scan tooling. The website's sample scans live separately in `website/public/scans/room3d/`. |
 | `lovable/` | UI design/export notes and prompts. |
 | `Roomsure MVP Requirements (for LLM build).md` | Product behavior and acceptance requirements; consult with the code and solution design. |
 
@@ -92,4 +93,4 @@ The browser tests set empty Claude credentials and exercise the rules path; they
 
 ## Next demo/integration milestone
 
-Restore and verify the frontend `/api/*` rewrite to the backend on the current `main` branch. Keep seed rooms available locally so the demo can still browse and rank if the backend is unavailable. Confirm the 3D sample assets before showing that screen; the current UI has a placeholder. Reintroduce host publishing only if it is in the agreed demo scope, then decide whether it needs backend persistence.
+Bring this repository's `main` up to date with the fork's `main` (the `/api/*` rewrite, the 3D tour fix, List your room and the sample scans), so both describe the same product. Keep seed rooms available locally so the demo can still browse and rank if the backend is unavailable. Decide whether host listings need backend persistence before promising more than a browser-only demo.

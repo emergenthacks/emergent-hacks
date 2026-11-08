@@ -4,7 +4,20 @@
 **Last reviewed:** 2026-11-08  
 **Related:** [README](README.md) · [Solution design](SOLUTION_DESIGN.md) · [MVP requirements](Roomsure%20MVP%20Requirements%20%28for%20LLM%20build%29.md) · [Demo script](demo-script.md)
 
-This document describes the latest `main` source as inspected on 2026-11-08. The product has two deployable apps: `website/` is the browser experience and `platform/` is the API. The browser client calls same-origin `/api/*` paths. **The latest `main` branch no longer contains `website/vercel.json`, so the production proxy is not configured in source right now.** The previous live routing check predates that removal; restore and verify the rewrite before claiming the frontend is reaching the backend.
+This document describes the code behind the live demo as inspected on 2026-11-08. The product has two deployable apps: `website/` is the browser experience and `platform/` is the API. The browser client calls same-origin `/api/*` paths.
+
+### Which code is live
+
+The production website (`https://roomsure-hackathon.vercel.app`) and API are built by Vercel from `main` of the fork [DivyaPrakash04/emergent-hacks](https://github.com/DivyaPrakash04/emergent-hacks). This repository's `main` is behind that branch. Where they differ:
+
+| Feature | Fork `main` (what production builds) | This repository's `main` |
+|---|---|---|
+| `/api/*` rewrite in `website/vercel.json` | Present | Missing, so website requests fall back to local mocks |
+| 3D tour on room pages | Opens sample scans: Fox Point, Downcity and College Hill show the team's kitchen; the Elmhurst dorm shows a bedroom | Shows a placeholder. The scan files are in `website/public/scans/room3d/`, but the demo rooms point at `/scans/<room>` paths that don't exist and the overlay only loads absolute URLs |
+| List your room | In-app flow at `/list-your-room`: browser-only, simulated host checks, sample-video scans | A static demo page, `website/public/host/index.html`, linked from the welcome page |
+| Backend 5xx falls back to local rules | Yes | Yes |
+
+Before a demo, confirm the production address serves the newest deployment of the fork's `main`, not an older one: `https://roomsure-hackathon.vercel.app/scans/room3d/rooms/bedroom.json` should return 200, and the Elmhurst dorm room page should open a 3D tour.
 
 ## 1. System diagram
 
@@ -16,7 +29,7 @@ flowchart LR
     State[Browser state and localStorage]
     Inventory[Synthetic seed rooms]
     Rank[Deterministic ranking and fair-price rules]
-    Tour[3D tour UI placeholder]
+    Tour[3D tour overlay: sample scans]
     APIClient[Typed API client with explicit mock fallback]
     UI <--> State
     UI --> Inventory
@@ -25,7 +38,7 @@ flowchart LR
     UI --> APIClient
   end
   subgraph VercelFrontend[Vercel project: roomsure]
-    Rewrite[/api/* rewrite — missing from latest main/]
+    Rewrite[/api/* rewrite in website/vercel.json]
   end
   subgraph VercelBackend[Vercel project: roomsure-api]
     Router[Next.js API catch-all]
@@ -45,9 +58,9 @@ flowchart LR
   AI -->|validated structured output| Claude
 ```
 
-**Browser requests:** `website/src/lib/roomsure/api.ts` is the screen-facing API. `backend.ts` handles JSON requests and response mapping. `withFallback()` uses local mocks only when the backend is unavailable or explicitly disabled. A JSON error from a reachable backend is surfaced rather than hidden by a mock.
+**Browser requests:** `website/src/lib/roomsure/api.ts` is the screen-facing API. `backend.ts` handles JSON requests and response mapping. `withFallback()` uses local mocks when the backend is unreachable, explicitly disabled, answers with something other than JSON, or returns a 5xx server error. A 4xx error from a reachable backend (validation, rate limit, duplicate reservation, origin check) is surfaced rather than hidden by a mock.
 
-**Production routing:** The required rewrite is `/api/:path*` → `https://roomsure-api.vercel.app/api/:path*`. It existed in an earlier branch but was removed from the latest `main`; add it back to `website/vercel.json` and deploy before expecting frontend Claude/session requests to reach the API. Without a proxy, the browser's API client falls back locally on an HTML/non-JSON response. When restored, the rewrite keeps session cookies on the website origin from the browser's perspective. Backend `APP_URL` must exactly match the public frontend origin because POST routes enforce an origin check.
+**Production routing:** The required rewrite is `/api/:path*` → `https://roomsure-api.vercel.app/api/:path*`. It lives in `website/vercel.json` on the fork's `main`, which production builds. This repository's `main` doesn't have the file; add it before deploying from here. Without a proxy, the browser's API client falls back locally on an HTML/non-JSON response. When restored, the rewrite keeps session cookies on the website origin from the browser's perspective. Backend `APP_URL` must exactly match the public frontend origin because POST routes enforce an origin check.
 
 ## 2. Deployable apps
 
@@ -85,7 +98,11 @@ The projects are connected to GitHub and deploy when their tracked branch change
 
 ### Host listing (current boundary)
 
-The latest `main` branch does not include a host listing workflow. There are no host-listing API routes or persistent host listing tables. Do not describe host listings as available, shared, persisted, or Claude-extracted.
+**List your room** on the production build (`/list-your-room`, fork `main`) is a browser-only demo. A demo host signs in, completes simulated checks (email, ID and selfie, card) and a right-to-rent question, then fills in a listing form. Code checks the form's rules and flags scam-like wording; no AI reads the form. A published room is saved in that browser's localStorage and joins only that browser's deck.
+
+To add a 3D tour, the host can upload one of two bundled sample videos (kitchen or bathroom). After a short staged progress bar, that room's pre-built scan is attached. Any other video needs the local scan service in `website/public/scans/room3d/scan-pipeline/`, which isn't deployed, so the page says live scanning isn't available.
+
+There are no host-listing API routes or database tables. Do not describe host listings as shared, persisted across devices, or Claude-extracted. This repository's `main` has only the static demo page `website/public/host/index.html`.
 
 ## 4. Data ownership
 
@@ -96,7 +113,7 @@ The latest `main` branch does not include a host listing workflow. There are no 
 | Host profile, draft and published room | Browser localStorage | No; local demo only. |
 | Demo users, sessions, payment/activity records | `platform/lib/db.ts`; Turso in hosted setup, SQLite for local development | Yes while Turso is configured; demo data only. |
 | Claude API key | Vercel environment variable on `roomsure-api` | Secret; server execution only. |
-| RoomWalk tour UI | `TourOverlay` component | The latest `main` removed `website/public/scans`; tour currently renders a placeholder. |
+| Sample 3D scans | Static files in `website/public/scans/room3d/` (rooms as JSON), shown in `TourOverlay` | Yes, as static files: the same sample for every visitor, not the listed room. |
 
 Current Turso configuration: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, and `TURSO_REQUIRED=true`. Local SQLite is the development fallback. Do not use ephemeral Vercel filesystem storage as a production database.
 
@@ -153,7 +170,8 @@ Avoid adding routes for UI-only features. If host listings become a team milesto
 
 ### `roomsure`
 
-- `website/vercel.json` should own the production API rewrite, but is missing from latest `main`. Restore it and verify `https://roomsure-hackathon.vercel.app/api/me` before the demo.
+- `website/vercel.json` owns the production API rewrite. It is on the fork's `main` but missing from this repository's `main`. Verify `https://roomsure-hackathon.vercel.app/api/me` before the demo.
+- Confirm the production address serves the newest deployment of the fork's `main`: `https://roomsure-hackathon.vercel.app/scans/room3d/rooms/bedroom.json` should return 200, and the Elmhurst dorm room page should open a 3D tour.
 - Browser build must not contain Claude, Turso, Stripe, or Resend secrets.
 - For preview environments, verify the preview frontend/backend URL and the API's `APP_URL`/origin policy before expecting POST requests to pass.
 
@@ -179,5 +197,5 @@ Avoid adding routes for UI-only features. If host listings become a team milesto
 2. Inventory, room prices, fair-price baselines and commute estimates are synthetic, not live or audited market data.
 3. ID/card/email checks, host replies, chat and payment in the presented demo are simulated. No escrow or deposit protection exists.
 4. Swipes and preferences are browser-local and do not train or personalize a model across users.
-5. The latest `main` does not bundle scan assets; the 3D tour view is a placeholder. Don't plan it as a working demo moment until sample assets are restored and smoke-tested.
+5. 3D tours are samples: Fox Point, Downcity and College Hill open the team's kitchen scan, and the Elmhurst dorm opens a bedroom. They aren't the listed rooms and prove nothing about a listing. Live video-to-scan needs a local scan service that isn't deployed. On this repository's `main`, the room page still shows a placeholder.
 6. Before real users: add real identity/payment provider configuration, legal/privacy/data-retention review, robust shared rate limiting, support and dispute handling, security monitoring, and trustworthy listing/host inventory.
