@@ -1,8 +1,8 @@
 // The one place screens get data from (see AGENTS.md rule 2).
 // Real backend first (platform/, through /api): demo login, Claude intake, Claude
 // scam check, and simulated reservations stored server-side. If no backend answers
-// (Lovable preview, backend not running), each call falls back to the local mock
-// below, so the screens always work. Rooms, ranking and host replies stay local.
+// or it has a temporary 5xx, AI screens use local rules and demo actions use local
+// mocks. Room inventory and ranking always use local seed data; host replies stay local.
 import { LISTINGS } from "./data/listings";
 import { parseIntakeRules } from "./intake";
 import { checkListingRules } from "./check";
